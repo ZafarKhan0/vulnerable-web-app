@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   db:
     image: mysql:5.7
@@ -8,15 +10,21 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
 
   web:
-    build:
-      context: .  # Current directory (project root)
-      dockerfile: docker/Dockerfile
+    build: ./docker
     ports:
       - "80:80"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    volumes:
+      - ./src:/var/www/html
 
 volumes:
   mysql_data:
