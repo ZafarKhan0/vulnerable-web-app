@@ -6,28 +6,37 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout code
+      # 1. Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2. Docker setup (corrected syntax)
       - name: Set up Docker
-        uses: docker/setup-qemu-action@v2
         uses: docker/setup-buildx-action@v2
+        
+      - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-      - name: Build and run containers
+      # 3. Build and run containers
+      - name: Build containers
         run: |
           docker compose -f docker/docker-compose.yml build
-          docker compose -f docker/docker-compose.yml up -d
           
+      - name: Start services
+        run: |
+          docker compose -f docker/docker-compose.yml up -d
+          docker ps
+
+      # 4. Security scans
       - name: Run Semgrep SAST
         uses: returntocorp/semgrep-action@v1
         with:
           config: p/owasp-top-ten
           
-      - name: Snyk Scan
+      - name: Snyk Security Scan
         uses: snyk/actions/php@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
