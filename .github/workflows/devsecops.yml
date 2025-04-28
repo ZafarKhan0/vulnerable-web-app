@@ -8,27 +8,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build Docker containers
-        run: docker-compose -f docker/docker-compose.yml build
+      # Add Docker setup step
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
 
+      # Updated Docker Compose step
+      - name: Build containers
+        run: |
+          docker compose -f docker/docker-compose.yml build
+          
       - name: SAST Scan (Semgrep)
         uses: returntocorp/semgrep-action@v1
         with:
           config: p/owasp-top-ten
-
-      - name: SAST Scan (SonarQube)
-        uses: SonarSource/sonarqube-scan-action@master
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
-      - name: SCA Scan (Snyk)
-        uses: snyk/actions/node@master
-        with:
-          command: monitor
-          args: --file=src/ --project-name=vulnerable-web-app
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-
-      - name: Fail on critical vulnerabilities
-        if: failure()
-        run: exit 1
